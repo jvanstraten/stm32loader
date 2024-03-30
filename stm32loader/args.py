@@ -115,6 +115,16 @@ def parse_arguments(arguments):
         "-b", "--baud", action="store", type=int, default=115200, help="Baudrate."
     )
 
+    port_arg = parser.add_argument(
+        "-t",
+        "--tcp",
+        action="store",
+        type=str,
+        metavar="IP:port",
+        default=None,
+        help=("Connect via TCP IP:port instead of local serial for serial to network bridges."),
+    )
+
     address_arg = parser.add_argument(
         "-a",
         "--address",

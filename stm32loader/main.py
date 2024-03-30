@@ -34,6 +34,7 @@ from stm32loader import args
 from stm32loader import hexfile
 from stm32loader import bootloader
 from stm32loader.uart import SerialConnection
+from stm32loader.tcp import TcpConnection
 
 
 class Stm32Loader:
@@ -61,16 +62,25 @@ class Stm32Loader:
 
     def connect(self):
         """Connect to the bootloader UART over an RS-232 serial port."""
-        serial_connection = SerialConnection(
-            self.configuration.port, self.configuration.baud, self.configuration.parity
-        )
-        self.debug(
-            10,
-            "Open port %(port)s, baud %(baud)d"
-            % {"port": self.configuration.port, "baud": self.configuration.baud},
-        )
+        if self.configuration.tcp:
+            connection = TcpConnection(self.configuration.tcp)
+            self.debug(
+                10,
+                "Open TCP %(tcp)s"
+                % {"tcp": self.configuration.tcp},
+            )
+        else:
+            connection = SerialConnection(
+                self.configuration.port, self.configuration.baud, self.configuration.parity
+            )
+            self.debug(
+                10,
+                "Open port %(port)s, baud %(baud)d"
+                % {"port": self.configuration.port, "baud": self.configuration.baud},
+            )
+
         try:
-            serial_connection.connect()
+            connection.connect()
         except IOError as e:
             print(str(e) + "\n", file=sys.stderr)
             print(
@@ -84,14 +94,14 @@ class Stm32Loader:
             )
             sys.exit(1)
 
-        serial_connection.swap_rts_dtr = self.configuration.swap_rts_dtr
-        serial_connection.reset_active_high = self.configuration.reset_active_high
-        serial_connection.boot0_active_low = self.configuration.boot0_active_low
+        connection.swap_rts_dtr = self.configuration.swap_rts_dtr
+        connection.reset_active_high = self.configuration.reset_active_high
+        connection.boot0_active_low = self.configuration.boot0_active_low
 
         show_progress = self._get_progress_bar(self.configuration.no_progress)
 
         self.stm32 = bootloader.Stm32Bootloader(
-            serial_connection,
+            connection,
             verbosity=self.configuration.verbosity,
             show_progress=show_progress,
             device_family=self.configuration.family,
